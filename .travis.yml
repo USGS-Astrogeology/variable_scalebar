@@ -28,7 +28,7 @@ install:
   
   # Useful for debugging any issues with conda
   - conda info -a 
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION gdal futures coveralls
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION gdal futures coverage
   - source activate test-environment
 
 script:
