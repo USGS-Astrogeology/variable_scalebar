@@ -3,4 +3,5 @@ from metadata import extract_metadata
 
 projstring = sys.argv[1]
 
-extract_metadata.extract_projstring(projstring)
+srs = extract_metadata.extract_projstring(projstring)
+print dir(srs)
