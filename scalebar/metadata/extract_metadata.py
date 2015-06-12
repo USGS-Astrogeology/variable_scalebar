@@ -46,17 +46,17 @@ def get_standard_parallels(srs):
         : list
           of standard parallels
     """
-    
+
     parallels = [None, None]
     print srs.GetProjParm('Standard_Parallel_1', 24)
     for i in lrange(2):
-        parallels[i] = srs.GetProjParm('Standard_Parallel_{}'.format(i), 0.0)    
+        parallels[i] = srs.GetProjParm('Standard_Parallel_{}'.format(i), 0.0)
     return parallels
 
 def get_central_meridian(srs):
     """
     Get the central meridian of the projection
-    
+
      Parameters
     ----------
     srs : object
@@ -68,14 +68,14 @@ def get_central_meridian(srs):
           central meridian
     """
 
-    return srs.GetProjParm('central_meridian', 0.0) 
+    return srs.GetProjParm('central_meridian', 0.0)
 
 
 def get_spheroid(srs):
     """
-    Get the semi-major, semi-minor, and inverse flattening 
+    Get the semi-major, semi-minor, and inverse flattening
     of the body from the srs
-     
+
     Parameters
     ----------
     srs : object
@@ -86,12 +86,12 @@ def get_spheroid(srs):
         : tuple
           semi-major, semi-minor, invflattening
     """
-    
+
     semimajor = srs.GetSemiMajor()
     semiminor = srs.GetSemiMinor()
     invflattening = srs.GetInvFlattening()
     return semimajor, semiminor, invflattening
- 
+
 def get_projection_name(srs):
     """
     Eactract the projection name from a

@@ -1,16 +1,19 @@
 import unittest
 import osr
+osr.UseExceptions()
 
 from .. import extract_metadata as em
 
 class TestSRSProjectionExtraction(unittest.TestCase):
-    
+
     def setUp(self):
         self.wktsrs = 'PROJCS["Moon2000_Mercator180",GEOGCS["GCS_Moon_2000",DATUM["D_Moon_2000",SPHEROID["Moon_2000_IAU_IAG",1737400.0,0.0]],PRIMEM["Reference_Meridian",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Mercator"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",180.0],PARAMETER["Standard_Parallel_1",0.0],UNIT["Meter",1.0]]'
+        self.wktsrs = 'PROJCS["Mercator",GEOGCS["GCS_Moon_2000",DATUM["D_Moon_2000",SPHEROID["Moon_2000_IAU_IAG",1737400.0,0.0]],PRIMEM["Reference_Meridian",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Mercator"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Central_Meridian",180.0],PARAMETER["Standard_Parallel_1",0.0],UNIT["Meter",1.0]]'
         self.srs = em.extract_projstring(self.wktsrs)
-    
+
     def test_generate_srs(self):
         self.srs = em.extract_projstring(self.wktsrs)
+        print dir(self.srs)
 
     def test_false_easting(self):
         e = em.get_false_easting(self.srs)
@@ -38,3 +41,10 @@ class TestSRSProjectionExtraction(unittest.TestCase):
     def test_get_central_meridian(self):
         clon = em.get_central_meridian(self.srs)
         self.assertEqual(clon, 180.0)
+
+    def test_export_to_proj4(self):
+        """
+        Check that proj4 is not supporting Moon2000_Mercator
+        """
+        with self.assertRaises(RuntimeError):
+            proj4 = self.srs.ExportToProj4()
