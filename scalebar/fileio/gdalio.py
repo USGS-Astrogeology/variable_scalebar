@@ -64,28 +64,23 @@ class GeoDataSet(object):
 
         return self._extent
 
-    def pixel_to_latlon(self, lat, lon):
+    def pixel_to_latlon(self, x, y):
 
         if not getattr(self, 'geotransform', None):
             self.geotransform
 
         if not getattr(self, 'srs', None):
             self.spatialreference
-        
 
-        print self._srs.ExportToProj4()
-        print self._gcs.ExportToProj4()
         if not getattr(self, 'ct', None):
             self.ct = osr.CoordinateTransformation(self.spatialreference,
                                                    self._gcs)
-            print self.ct
-        #(x, y, z) = self.ct.TransformPoint(18, 24, 0)
+        gt = self.geotransform
+        ulon = (x - gt[1]) /gt[0]
+        ulat = (y - gt[5]) / gt[3]
+        lat, lon, _ = self.ct.TransformPoint(ulon, ulat)
 
-        #gt = self.geotransform
-        #x = (x - gt[0]) /gt[1]
-        #y = (y - gt[3]) / gt[5]
-
-        return 0, 0
+        return lat, lon
 
     def latlon_to_pixel(self):
         pass
