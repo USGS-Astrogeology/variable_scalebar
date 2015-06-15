@@ -1,6 +1,8 @@
 from osgeo import gdal
 import osr
 
+from scalebar.metadata import extract_metadata as em
+
 class GeoDataSet(object):
     def __init__(self, filename):
         self.filename = filename
@@ -13,10 +15,10 @@ class GeoDataSet(object):
         return self._geotransform
 
     @property
-    def scale(self):
-        if not getattr(self, '_scale', None):
-            self._scale = self.ds.GetRasterBand(1).GetScale()
-        return self._scale
+    def standardparallels(self):
+        if not getattr(self, '_standardparallels', None):
+            self._standardparallels = em.get_standard_parallels(self.spatialreference)
+        return self._standardparallels
 
     @property
     def unittype(self):
@@ -30,22 +32,13 @@ class GeoDataSet(object):
             self._srs = osr.SpatialReference()
             self._srs.ImportFromWkt(self.ds.GetProjection())
             try:
+                self._srs.MorphToESRI()
                 self._srs.MorphFromESRI()
             except: pass
 
             #Setup the GCS
             self._gcs = self._srs.CloneGeogCS()
         return self._srs
-
-    @property
-    def latlonextent(self):
-        if not getattr(self, '_geotransform', None):
-                   self.geotransform
-
-        if not getattr(self, '_latlonextent', None):
-
-
-            self._latlonextent = [(),()]
 
     @property
     def extent(self):
@@ -76,11 +69,12 @@ class GeoDataSet(object):
             self.ct = osr.CoordinateTransformation(self.spatialreference,
                                                    self._gcs)
         gt = self.geotransform
-        ulon = (x - gt[1]) /gt[0]
-        ulat = (y - gt[5]) / gt[3]
-        lat, lon, _ = self.ct.TransformPoint(ulon, ulat)
+        ulon = x * (gt[1] / 2.0) + gt[0]
+        ulat = y * (gt[5] / 2.0) + gt[3]
+        lon, lat, _ = self.ct.TransformPoint(ulon, ulat)
 
         return lat, lon
+
 
     def latlon_to_pixel(self):
         pass

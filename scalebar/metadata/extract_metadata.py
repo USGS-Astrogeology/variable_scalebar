@@ -48,9 +48,8 @@ def get_standard_parallels(srs):
     """
 
     parallels = [None, None]
-    print srs.GetProjParm('Standard_Parallel_1', 24)
     for i in lrange(2):
-        parallels[i] = srs.GetProjParm('Standard_Parallel_{}'.format(i), 0.0)
+        parallels[i] = srs.GetProjParm('Standard_Parallel_{}'.format(i+1), 0.0)
     return parallels
 
 def get_central_meridian(srs):
