@@ -29,6 +29,12 @@ class GeoDataSet(object):
         if not getattr(self, '_srs', None):
             self._srs = osr.SpatialReference()
             self._srs.ImportFromWkt(self.ds.GetProjection())
+            try:
+                self._srs.MorphFromESRI()
+            except: pass
+
+            #Setup the GCS
+            self._gcs = self._srs.CloneGeogCS()
         return self._srs
 
     @property
@@ -65,16 +71,14 @@ class GeoDataSet(object):
 
         if not getattr(self, 'srs', None):
             self.spatialreference
+        
 
-        if not getattr(self, 'srslatlon', None):
-            self.srslatlon = self.spatialreference.CloneGeogCS()
-            print self.srslatlon.ExportToProj4()
-            print self.spatialreference.ExportToProj4()
-
+        print self._srs.ExportToProj4()
+        print self._gcs.ExportToProj4()
         if not getattr(self, 'ct', None):
-            self.ct = osr.CoordinateTransformation(self.srslatlon,
-                                                   self.spatialreference)
-            #print self.ct
+            self.ct = osr.CoordinateTransformation(self.spatialreference,
+                                                   self._gcs)
+            print self.ct
         #(x, y, z) = self.ct.TransformPoint(18, 24, 0)
 
         #gt = self.geotransform
