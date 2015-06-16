@@ -22,12 +22,17 @@ class TestMercator(unittest.TestCase):
 
     def test_pixel_to_latlon(self):
         lat, lon = self.ds.pixel_to_latlon(0,0)
-        self.assertAlmostEqual(lat, 55.33228905180849, 6)
-        self.assertEqual(lon, 0.0)
+        self.assertAlmostEqual(lat, 55.3322890518, 6)
+        self.assertAlmostEqual(lon, 0.0, 6)
+
+
 
     def test_extent(self):
         extent = self.ds.extent
         self.assertEqual(extent, [(0.0, -3921610.0), (10667520.0, 3921610.0)])
+
+    def test_latlonextent(self):
+        self.assertEqual(self.ds.latlon_extent, [(90.0, 0.0), (-90.0, -150.4067721290261)])
 
 class TestLambert(unittest.TestCase):
     def setUp(self):
@@ -51,6 +56,12 @@ class TestLambert(unittest.TestCase):
         self.assertAlmostEqual(lat, 69.90349154912009, 6)
         self.assertAlmostEqual(lon, -29.72166902463681, 6)
 
+    def test_latlon_to_pixel(self):
+        lat, lon = 69.90349154912009, -29.72166902463681
+        pixel = self.ds.latlon_to_pixel(lat, lon)
+        self.assertAlmostEqual(pixel[0], 0.0, 6)
+        self.assertAlmostEqual(pixel[1], 0.0, 6)
+
     def test_standard_parallels(self):
         sp = self.ds.standardparallels
         self.assertEqual(sp, [73.0, 42.0])
@@ -59,6 +70,8 @@ class TestLambert(unittest.TestCase):
         extent = self.ds.extent
         self.assertEqual(extent, [(-464400.0, -1571220.0), (460530.0, -506970.0)])
 
+    def test_latlon_extent(self):
+        self.assertEqual(self.ds.latlon_extent, [(-89.98516988892511, -171.35800063907413), (-89.95883789218114, -178.8099427811737)])
 
 class TestPolar(unittest.TestCase):
     def setUp(self):
@@ -79,15 +92,16 @@ class TestPolar(unittest.TestCase):
 
     def test_pixel_to_latlon(self):
         lat, lon = self.ds.pixel_to_latlon(0,0)
-        self.assertAlmostEqual(lat, 42.25747350133827, 6)
+        self.assertAlmostEqual(lat, 42.2574735013, 6)
         self.assertAlmostEqual(lon, -135.0, 6)
 
-        #Check the pole
-        mid = 1064900
-        lat, lon = self.ds.pixel_to_latlon(mid, mid)
-        self.assertAlmostEqual(lat, -89.78046521460993, 6)
-        self.assertAlmostEqual(lon, 45.0, 6)
+    def test_latlon_to_pixel(self):
+        lat, lon = 42.2574735013, -135.0
+        pixel = self.ds.latlon_to_pixel(lat, lon)
+        self.assertAlmostEqual(pixel[0], 0.0, 6)
+        self.assertAlmostEqual(pixel[1], 0.0, 6)
 
     def test_extent(self):
         extent = self.ds.extent
         self.assertEqual(extent, [(-2129800.0, -2129800.0), (2129800.0, 2129800.0)])
+

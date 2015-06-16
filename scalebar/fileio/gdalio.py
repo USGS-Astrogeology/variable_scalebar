@@ -41,6 +41,23 @@ class GeoDataSet(object):
         return self._srs
 
     @property
+    def geospatial_coordinate_system(self):
+        if not getattr(self, '_gcs', None):
+            self._gcs = self.spatialreference.CloneGeogCS()
+        return self._gcs
+
+    @property
+    def latlon_extent(self):
+        if not getattr(self, '_latlonextent', None):
+            ext = self.extent
+
+            llat, llon = self.pixel_to_latlon(ext[0][0], ext[0][1])
+            ulat, ulon = self.pixel_to_latlon(ext[1][0], ext[1][1])
+
+            self._latlonextent = [(llat, llon), (ulat, ulon)]
+        return self._latlonextent
+
+    @property
     def extent(self):
         if not getattr(self, '_geotransform', None):
             self.geotransform
@@ -57,6 +74,20 @@ class GeoDataSet(object):
 
         return self._extent
 
+    @property
+    def coordinate_transformation(self):
+        if not getattr(self, '_ct', None):
+            self._ct = osr.CoordinateTransformation(self.spatialreference,
+                                                  self.geospatial_coordinate_system)
+        return self._ct
+
+    @property
+    def inverse_coordinate_transformation(self):
+        if not getattr(self, '_ict', None):
+                       self._ict = osr.CoordinateTransformation(self.geospatial_coordinate_system,
+                                                                self.spatialreference)
+        return self._ict
+
     def pixel_to_latlon(self, x, y):
 
         if not getattr(self, 'geotransform', None):
@@ -65,19 +96,19 @@ class GeoDataSet(object):
         if not getattr(self, 'srs', None):
             self.spatialreference
 
-        if not getattr(self, 'ct', None):
-            self.ct = osr.CoordinateTransformation(self.spatialreference,
-                                                   self._gcs)
         gt = self.geotransform
-        ulon = x * (gt[1] / 2.0) + gt[0]
-        ulat = y * (gt[5] / 2.0) + gt[3]
-        lon, lat, _ = self.ct.TransformPoint(ulon, ulat)
+        x = gt[0] + (x * gt[1]) + (y * gt[2])
+        y = gt[3] + (x * gt[4]) + (y * gt[5])
+        lon, lat, _ = self.coordinate_transformation.TransformPoint(x, y)
 
         return lat, lon
 
-
-    def latlon_to_pixel(self):
-        pass
+    def latlon_to_pixel(self, lat, lon):
+        gt = self.geotransform
+        ulat, ulon, _ = self.inverse_coordinate_transformation.TransformPoint(lon, lat)
+        x = (ulat - gt[0]) / gt[1]
+        y = (ulon - gt[3]) / gt[5]
+        return x, y
 
     @property
     def ndv(self, band=1):
