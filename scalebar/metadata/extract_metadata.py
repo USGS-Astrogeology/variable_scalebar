@@ -69,7 +69,6 @@ def get_central_meridian(srs):
 
     return srs.GetProjParm('central_meridian', 0.0)
 
-
 def get_spheroid(srs):
     """
     Get the semi-major, semi-minor, and inverse flattening
@@ -93,7 +92,7 @@ def get_spheroid(srs):
 
 def get_projection_name(srs):
     """
-    Eactract the projection name from a
+    Extract the projection name from a
     spatial reference system
 
     Parameters
@@ -144,3 +143,4 @@ def get_false_northing(srs):
     """
 
     return srs.GetProjParm('False_Northing', 0)
+

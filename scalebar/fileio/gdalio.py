@@ -50,10 +50,8 @@ class GeoDataSet(object):
     def latlon_extent(self):
         if not getattr(self, '_latlonextent', None):
             ext = self.extent
-
             llat, llon = self.pixel_to_latlon(ext[0][0], ext[0][1])
             ulat, ulon = self.pixel_to_latlon(ext[1][0], ext[1][1])
-
             self._latlonextent = [(llat, llon), (ulat, ulon)]
         return self._latlonextent
 
@@ -89,13 +87,6 @@ class GeoDataSet(object):
         return self._ict
 
     def pixel_to_latlon(self, x, y):
-
-        if not getattr(self, 'geotransform', None):
-            self.geotransform
-
-        if not getattr(self, 'srs', None):
-            self.spatialreference
-
         gt = self.geotransform
         x = gt[0] + (x * gt[1]) + (y * gt[2])
         y = gt[3] + (x * gt[4]) + (y * gt[5])
@@ -116,4 +107,34 @@ class GeoDataSet(object):
             self._ndv = self.ds.GetRasterBand(band).GetNoDataValue()
         return self._ndv
 
+    @property
+    def scale(self):
+        if not getattr(self, '_scale', None):
+            unitname = self.spatialreference.GetLinearUnitsName()
+            value = self.spatialreference.GetLinearUnits()
+            self._scale = (unitname, value)
+        return self._scale
 
+    @property
+    def spheroid(self):
+        if not getattr(self, '_spheroid', None):
+            self._spheroid = em.get_spheroid(self.spatialreference)
+        return self._spheroid
+
+    @property
+    def standardparallels(self):
+        if not getattr(self, '_standardparallels', None):
+            self._standardparallels = em.get_standard_parallels(self.spatialreference)
+        return self._standardparallels
+
+    @property
+    def rastersize(self):
+        if not getattr(self, '_rastersize', None):
+            self._rastersize = (self.ds.RasterXSize, self.ds.RasterYSize)
+        return self._rastersize
+
+    @property
+    def central_meridian(self):
+        if not getattr(self, '_central_meridian', None):
+            self._central_meridian = em.get_central_meridian(self.spatialreference)
+        return self._central_meridian

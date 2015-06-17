@@ -25,7 +25,8 @@ class TestMercator(unittest.TestCase):
         self.assertAlmostEqual(lat, 55.3322890518, 6)
         self.assertAlmostEqual(lon, 0.0, 6)
 
-
+    def test_scale(self):
+        self.assertEqual(self.ds.scale, ('Meter', 1.0))
 
     def test_extent(self):
         extent = self.ds.extent
@@ -33,6 +34,18 @@ class TestMercator(unittest.TestCase):
 
     def test_latlonextent(self):
         self.assertEqual(self.ds.latlon_extent, [(90.0, 0.0), (-90.0, -150.4067721290261)])
+
+    def test_spheroid(self):
+        sphere = self.ds.spheroid
+        self.assertAlmostEqual(sphere[0], 3396190.0, 6)
+        self.assertEqual(self.ds.spheroid, (3396190.0, 3376200.0, 169.8944472236118))
+        self.assertAlmostEqual(sphere[1], 3376200.0, 6)
+        self.assertAlmostEqual(sphere[2], 169.8944472236118, 6)
+
+    def test_rastersize(self):
+        size = self.ds.rastersize
+        self.assertEqual(size[0], 2304)
+        self.assertEqual(size[1], 1694)
 
 class TestLambert(unittest.TestCase):
     def setUp(self):
