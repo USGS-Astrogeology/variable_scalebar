@@ -127,6 +127,8 @@ def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_min
     import svgwrite as svg
     from svgwrite import cm
 
+    padding = 2.0
+
     #Read file and get projection information
     ds = gdalio.GeoDataSet(get_path('Mars_MGS_MOLA_ClrShade_MAP2_0.0N0.0_MERC.tif'))
     #ds = gdalio.GeoDataSet(get_path('Mars_MGS_MOLA_ClrShade_MAP2_90.0N0.0_POLA.tif'))
@@ -134,7 +136,10 @@ def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_min
     semimajor, semiminor, invflat = ds.spheroid
     projstr = ds.spatialreference.ExportToProj4()
 
-    dwg = svg.Drawing('svgtest.svg', size=(size[0] * cm, size[1] * cm), debug=True)
+    #Setup the drawing
+    dwg = svg.Drawing('svgtest.svg', size=((size[0] + padding) * cm, size[1] * cm), debug=True)
+    text = dwg.add(dwg.g(font_size=fontsize)) #Text group
+    padding /= 2.0
 
     if symmetrical == True:
         size = list(size)
@@ -176,12 +181,10 @@ def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_min
 
     #Draw the line(s)
     vertical = dwg.add(dwg.g(id='vertical', stroke='black'))
-    center = size[0] * cm
+    center = (size[0] + padding) * cm
     for i in range(ny - 1):
         line = dwg.line(start=(center, y[i] * cm), end=(center, y[i+1] * cm))
         vertical.add(line)
-
-
 
     num = (size[0] / mapscale) / 100 #cm to m
     lon_major_ticks = map(lambda x: x * 1000, lon_major_ticks) #km to m
@@ -191,12 +194,12 @@ def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_min
     pixels_per_scale_distance = num / distance
     x = (pixels_per_scale_distance * size[0]) / pixels_per_scale_distance[-1]
     max_extents = dwg.add(dwg.g(id='maxextents', stroke='black'))
-    nodes = zip((x + size[0]) * cm, y[::-1] * cm)
+    nodes = zip((x + size[0] + padding) * cm, y[::-1] * cm)
     for i, start in enumerate(nodes[:-1]):
         line = dwg.line(start=(start), end=(nodes[i + 1]))
         max_extents.add(line)
     if symmetrical:
-        nx = (x * -1) + size[0]
+        nx = (x * -1) + size[0] + padding
         nodes = zip(nx * cm, y[::-1] * cm)
         for i, start in enumerate(nodes[:-1]):
             line = dwg.line(start=start, end=nodes[i+1])
@@ -207,13 +210,13 @@ def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_min
 
     for l in ticks:
         line_coords = (x * l) / num
-        nodes = zip((line_coords + size[0]) * cm, y[::-1] * cm)
+        nodes = zip((line_coords + size[0] + padding) * cm, y[::-1] * cm)
         for i, start in enumerate(nodes[:-1]):
             line = dwg.line(start=start, end=nodes[i+1])
             vertical_ticks.add(line)
 
         if symmetrical:
-            nline_coords = (line_coords * -1) + size[0]
+            nline_coords = (line_coords * -1) + size[0] + padding
             nodes = zip(nline_coords * cm, y[::-1] * cm)
             for i, start in enumerate(nodes[:-1]):
                 line = dwg.line(start=start, end=nodes[i+1])
@@ -224,26 +227,28 @@ def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_min
     latrange = lat[:nnodes][mask]
     ticks = np.arange(integerround(latrange[0] + lat_tick_interval) ,latrange[-2], lat_tick_interval)
     ticks = labels = np.hstack((round(latrange[0], 1), ticks, round(latrange[-1], 1)))
-
+    labels = labels[::-1]
     horizontal_ticks = dwg.add(dwg.g(id='horizontal_tick', stroke='black'))
 
     #Compute the y coordinate values in scalebar space
     horizontals =  (size[1] * ticks) / ticks[-1]
     for i, h in enumerate(horizontals):
-        x = [size[0] * cm, size[0] * 2 * cm]
+        x = [(size[0] + padding) * cm, (size[0] *2) + padding * cm]
         y = [h * cm, h * cm]
         xy = zip(x, y)
         line = dwg.line(start=xy[0], end=xy[1])
         horizontal_ticks.add(line)
+        lat = dwg.text(u'{}\u00b0'.format(labels[i]), ((size[0] * 2 + 0.1) * cm, y[1]))
+        text.add(lat)
 
         if symmetrical:
-            x = [0 * cm, size[0] * cm]
+            x = [padding * cm, (size[0] + padding) * cm]
             y = [h * cm, h * cm]
             xy = zip(x, y)
             line = dwg.line(start=xy[0], end=xy[1])
             horizontal_ticks.add(line)
-
-
+            lat = dwg.text(u'{}\u00b0'.format(labels[i]), (0.0 * cm, y[1]))
+            text.add(lat)
     dwg.save()
 if __name__ == '__main__':
     mainsvg()
