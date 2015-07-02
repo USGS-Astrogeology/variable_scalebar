@@ -123,28 +123,19 @@ def main(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_minor_
     plt.savefig('test.svg', pad_inches=0)
     #plt.show()
 
-def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_minor_ticks=[25], lon_major_ticks=[50, 100], symmetrical=True, size=(30,4), dpi=300, fontsize=10, linewidth=0.5):
+def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6,
+            lon_minor_ticks=[12.5], lon_major_ticks=[25, 50, 100],
+            symmetrical=True, height = 4.0, dpi=300, fontsize=12, linewidth=0.5, padding=2.0):
+
     import svgwrite as svg
     from svgwrite import cm
 
-    padding = 2.0
-
     #Read file and get projection information
     ds = gdalio.GeoDataSet(get_path('Mars_MGS_MOLA_ClrShade_MAP2_0.0N0.0_MERC.tif'))
-    #ds = gdalio.GeoDataSet(get_path('Mars_MGS_MOLA_ClrShade_MAP2_90.0N0.0_POLA.tif'))
     (xmin, ymin), (xmax, ymax) = ds.extent
     semimajor, semiminor, invflat = ds.spheroid
     projstr = ds.spatialreference.ExportToProj4()
 
-    #Setup the drawing
-    dwg = svg.Drawing('svgtest.svg', size=((size[0] + padding) * cm, size[1] * cm), debug=True)
-    text = dwg.add(dwg.g(font_size=fontsize)) #Text group
-    padding /= 2.0
-
-    if symmetrical == True:
-        size = list(size)
-        size[0] /= 2
-        size = tuple(size)
 
     #Create proj4 projection and geod objects
     proj = pyproj.Proj(projstr)
@@ -168,59 +159,69 @@ def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_min
 
     #Pass the latlon grid into the geod to compute distances
     _, _, distance = geod.inv(slon[mask], slat[mask], elon[mask], elat[mask])
+    distance *= 100  #m to cm
+    distance *= mapscale #Apply the map scale
+    distance /= distance[-1] #Compute the scaling factor as a function of latitude
 
-    #Get pixel count and cm per pixel
-    npixels = xmax - xmin
-    distance /= ds.rastersize[0]  #meters per pixel
-
-    #Create the vertical
-    y = coords[:nnodes, 1][mask] / (ds.rastersize[0])
-    y = (y * size[1]) / y[-1]
-    ny = len(y)
-    x = np.zeros(len(y))
-
-    #Draw the line(s)
-    vertical = dwg.add(dwg.g(id='vertical', stroke='black'))
-    center = (size[0] + padding) * cm
-    for i in range(ny - 1):
-        line = dwg.line(start=(center, y[i] * cm), end=(center, y[i+1] * cm))
-        vertical.add(line)
-
-    num = (size[0] / mapscale) / 100 #cm to m
     lon_major_ticks = map(lambda x: x * 1000, lon_major_ticks) #km to m
     lon_minor_ticks = map(lambda x: x * 1000, lon_minor_ticks)
 
-    #Compute and plot the outer extents
-    pixels_per_scale_distance = num / distance
-    x = (pixels_per_scale_distance * size[0]) / pixels_per_scale_distance[-1]
-    max_extents = dwg.add(dwg.g(id='maxextents', stroke='black'))
-    nodes = zip((x + size[0] + padding) * cm, y[::-1] * cm)
-    for i, start in enumerate(nodes[:-1]):
-        line = dwg.line(start=(start), end=(nodes[i + 1]))
-        max_extents.add(line)
-    if symmetrical:
-        nx = (x * -1) + size[0] + padding
-        nodes = zip(nx * cm, y[::-1] * cm)
-        for i, start in enumerate(nodes[:-1]):
-            line = dwg.line(start=start, end=nodes[i+1])
-            max_extents.add(line)
-
     ticks = lon_major_ticks + lon_minor_ticks
-    vertical_ticks = dwg.add(dwg.g(id='vertical_ticks', stroke='black'))
 
+    ticks.sort()
+    ticks = ticks[::-1]
+    print ticks
+
+    dwg = None
     for l in ticks:
-        line_coords = (x * l) / num
-        nodes = zip((line_coords + size[0] + padding) * cm, y[::-1] * cm)
+        line_coords = ((l * 100) *  mapscale) * distance
+
+        if dwg == None:
+            length = line_coords[0]
+            size = (length * 2, height)
+
+            #Setup the drawing
+            dwg = svg.Drawing('svgtest.svg', size=((size[0] + padding) * cm, (size[1] + padding) * cm), debug=True)
+            text = dwg.add(dwg.g(font_size=fontsize)) #Text group
+            padding /= 2.0
+
+            if symmetrical == True:
+                size = list(size)
+                size[0] /= 2
+                size = tuple(size)
+
+            #Create the vertical
+            vertical_ticks = dwg.add(dwg.g(id='vertical_ticks', stroke='black'))
+            y = coords[:nnodes, 1][mask] / (ds.rastersize[0])
+            y = (y * size[1]) / y[-1]
+            y += padding
+            ny = len(y)
+            x = np.zeros(len(y))
+
+            #Draw the line(s)
+            vertical = dwg.add(dwg.g(id='vertical', stroke='black'))
+            center = (size[0] + padding) * cm
+            for i in range(ny - 1):
+                line = dwg.line(start=(center, y[i] * cm), end=(center, y[i+1] * cm))
+                vertical.add(line)
+
+
+        nodes = zip((line_coords[::-1] + size[0] + padding) * cm, y[::-1] * cm)
         for i, start in enumerate(nodes[:-1]):
             line = dwg.line(start=start, end=nodes[i+1])
             vertical_ticks.add(line)
-
+            if i == 0 and l in lon_major_ticks:
+                dist = dwg.text('{}km'.format(l / 1000), (start[0], (y[-1] + padding / 3.0) * cm))
+                dwg.add(dist)
         if symmetrical:
-            nline_coords = (line_coords * -1) + size[0] + padding
-            nodes = zip(nline_coords * cm, y[::-1] * cm)
+            nline_coords = (line_coords * -1)
+            nodes = zip((nline_coords[::-1] + size[0] + padding) * cm, y[::-1] * cm)
             for i, start in enumerate(nodes[:-1]):
                 line = dwg.line(start=start, end=nodes[i+1])
                 vertical_ticks.add(line)
+                if i == 0 and l in lon_major_ticks:
+                    dist = dwg.text('{}km'.format(l / 1000), (start[0], (y[-1] + padding / 3.0) * cm ))
+                    dwg.add(dist)
 
 
     #Compute the latrange and labels
@@ -233,22 +234,24 @@ def mainsvg(nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6, lon_min
     #Compute the y coordinate values in scalebar space
     horizontals =  (size[1] * ticks) / ticks[-1]
     for i, h in enumerate(horizontals):
-        x = [(size[0] + padding) * cm, (size[0] *2) + padding * cm]
-        y = [h * cm, h * cm]
+        x = [(size[0] + padding) * cm, (size[0] * 2 + padding) * cm]
+        y = [(h + padding)  * cm] * 2
         xy = zip(x, y)
         line = dwg.line(start=xy[0], end=xy[1])
         horizontal_ticks.add(line)
-        lat = dwg.text(u'{}\u00b0'.format(labels[i]), ((size[0] * 2 + 0.1) * cm, y[1]))
-        text.add(lat)
+        if i % 2 == 0:
+            lat = dwg.text(u'{}\u00b0'.format(labels[i]), ((size[0] * 2 + 1.0) * cm, y[1]))
+            text.add(lat)
 
         if symmetrical:
             x = [padding * cm, (size[0] + padding) * cm]
-            y = [h * cm, h * cm]
             xy = zip(x, y)
             line = dwg.line(start=xy[0], end=xy[1])
             horizontal_ticks.add(line)
-            lat = dwg.text(u'{}\u00b0'.format(labels[i]), (0.0 * cm, y[1]))
-            text.add(lat)
+            if i % 2 == 0:
+                lat = dwg.text(u'{}\u00b0'.format(labels[i]), (0.0 * cm, y[1]))
+                text.add(lat)
+
     dwg.save()
 if __name__ == '__main__':
     mainsvg()
