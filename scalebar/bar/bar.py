@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import itertools
+import math
 import sys
 
 import numpy as np
@@ -62,9 +63,8 @@ class ScaleBar():
 
     """
     def __init__(self, spatialreference, extent, nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6,
-                lon_minor_ticks=[12.5], lon_major_ticks=[25, 50, 100],
+                lon_minor_ticks=[12.5], lon_major_ticks=[25, 50, 75],
                 symmetrical=True, height = 4.0, fontsize=12, padding=1.0, outputname='scalebar.svg'):
-
         nnodes = self._checknnodes(nnodes)
 
         self.fontsize = fontsize
@@ -79,7 +79,9 @@ class ScaleBar():
         semimajor = spatialreference.GetSemiMajor()
         semiminor = spatialreference.GetSemiMinor()
 
+        name = emd.get_projection_name(spatialreference)
         parallels = emd.get_standard_parallels(spatialreference)
+
         #Create proj4 projection and geod objects
         proj = pyproj.Proj(projstr)
         geod = pyproj.Geod(a=semimajor, b=semiminor)
@@ -93,27 +95,43 @@ class ScaleBar():
         #Convert to pixel grid to latlon grid
         lon, lat =  proj(self.coords[:,0], self.coords[:,1], inverse=True)
 
-        if parallels[0] >= lat[0] and parallels[0] <= lat[1]:
-            p = parallels[0]
+        if name != 'Polar_Stereographic':
+
+            if parallels[0] >= lat[0] and parallels[0] <= lat[1]:
+                p = parallels[0]
+            else:
+                p = parallels[1]
+
+            #Ensure that the standard parallel, where scale is correct, is in the linspace
+            sidx = np.abs(lat[:self.nnodes] - p).argmin()
+            eidx = np.abs(lat[self.nnodes:] - p).argmin()
+            lat[:self.nnodes][sidx] = p
+            lat[self.nnodes:][eidx] = p
+            slon = lon[:self.nnodes]
+            slat = lat[:self.nnodes]
+            elon = lon[self.nnodes:]
+            elat = lat[self.nnodes:]
+
+            self.mask = slat >= cliplat
+            #Pass the latlon grid into the geod to compute distances
+            _, _, distance = geod.inv(slon[self.mask], slat[self.mask], elon[self.mask], elat[self.mask])
+            distance *= 100  #m to cm
+            distance *= mapscale #Apply the map scale
+            distance /= distance[eidx] #Compute the scaling factor as a function of latitude using a standard parallel
         else:
-            p = parallels[1]
+            #Manually compute k
+            self.coords = np.empty((nnodes * 2, 2))
+            self.coords[:,1] = lat = np.tile(np.linspace(np.min(lat), 90, self.nnodes), 2)
+            distance = np.empty(len(self.coords[:,1]))
+            k_naught = emd.get_scale_factor(spatialreference)
+            clat = emd.get_latitude_of_origin(spatialreference)
+            clon = emd.get_central_meridian(spatialreference)
+            for i, l in enumerate(self.coords[:,1]):
+                distance[i] = (2 * k_naught) / (1.0 + math.sin(math.radians(clat)) * math.sin(math.radians(l)) +\
+                            math.cos(math.radians(clat))*math.cos(math.radians(l))*math.cos(math.radians(180 - clon)))
+            distance = distance[::-1]
+            self.mask = self.coords[self.nnodes:,1] >= cliplat
 
-        #Ensure that the standard parallel, where scale is correct, is in the linspace
-        sidx = np.abs(lat[:self.nnodes] - p).argmin()
-        eidx = np.abs(lat[self.nnodes:] - p).argmin()
-        lat[:self.nnodes][sidx] = p
-        lat[self.nnodes:][eidx] = p
-        slon = lon[:self.nnodes]
-        slat = lat[:self.nnodes]
-        elon = lon[self.nnodes:]
-        elat = lat[self.nnodes:]
-
-        self.mask = slat >= cliplat
-        #Pass the latlon grid into the geod to compute distances
-        _, _, distance = geod.inv(slon[self.mask], slat[self.mask], elon[self.mask], elat[self.mask])
-        distance *= 100  #m to cm
-        distance *= mapscale #Apply the map scale
-        distance /= distance[eidx] #Compute the scaling factor as a function of latitude using a standard parallel
         lon_major_ticks = map(lambda x: x * 1000, lon_major_ticks) #km to m
         lon_minor_ticks = map(lambda x: x * 1000, lon_minor_ticks)
 
@@ -158,10 +176,6 @@ class ScaleBar():
         ticks = labels = np.hstack((round(latrange[0], 1), ticks, round(latrange[-1], 1)))
         horizontal_ticks = self._dwg.add(self._dwg.g(id='horizontal_tick', stroke='black'))
         #Compute the y coordinate values in scalebar space
-        #if p not in ticks:
-            #idx =  np.searchsorted(ticks, p)
-            #ticks = np.insert(ticks, idx, p)
-            #labels = np.insert(labels, idx, p)
 
         horizontals = self.height / (np.max(ticks) - np.min(ticks)) *(ticks - np.min(ticks))
         horizontals = np.abs(horizontals - self.height)
@@ -194,8 +208,9 @@ class ScaleBar():
         return cls(srs, extent, **kwargs)
 
     @classmethod
-    def from_projstring(cls, projstring, extent):
-        raise NotImplementedError
+    def from_projstring(cls, projstring, extent, **kwargs):
+        srs = emd.extract_projstring(projstring)
+        return cls(srs, extent, **kwargs)
 
     def createdrawing(self, size):
         xsize = (size[0] + self.padding * 2) * cm

@@ -17,29 +17,38 @@ class TestScaleBar(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_mertcator_image(self):
+    def test_mercator_image(self):
         ds = get_path('Mars_MGS_MOLA_ClrShade_MAP2_0.0N0.0_MERC.tif')
         s = bar.ScaleBar.from_image(ds, outputname='merctest.svg')
         ref, test = getsvg(get_path('mars_merc.svg'), 'merctest.svg')
-        os.remove('merctest.svg')
         self.assertEqual(ref, test)
 
     def test_polar_image(self):
         ds = get_path('Mars_MGS_MOLA_ClrShade_MAP2_90.0N0.0_POLA.tif')
-        s = bar.ScaleBar.from_image(ds, outputname = 'pola_tests.svg')
+        s = bar.ScaleBar.from_image(ds, outputname = 'pola_test.svg')
+        ref, test = getsvg(get_path('mars_polar.svg'), 'pola_test.svg')
+        self.assertEqual(ref, test)
 
     def test_lambert_image(self):
         ds = get_path('Lunar_LRO_LOLA_Shade_MAP2_90.0N20.0_LAMB.tif')
         s = bar.ScaleBar.from_image(ds, outputname='lambtest.svg')
         ref, test = getsvg(get_path('lunar_lamb.svg'), 'lambtest.svg')
-        os.remove('lambtest.svg')
         self.assertEqual(ref, test)
 
-    def test_mercator_projstring(self):
+    def test_mercator_proj4string(self):
         pass
 
-    def test_polar_projstring(self):
+    def test_polar_proj4string(self):
         pass
 
-    def test_lambert_projstring(self):
+    def test_lambert_proj4string(self):
+        pass
+
+    def test_mercator_wktstring(self):
+        pass
+
+    def test_polar_wktstring(self):
+        pass
+
+    def test_lambert_wktstring(self):
         pass

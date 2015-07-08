@@ -144,3 +144,39 @@ def get_false_northing(srs):
 
     return srs.GetProjParm('False_Northing', 0)
 
+def get_scale_factor(srs):
+    """
+    Extract the scale factor, k, from
+    a spatial reference system (if present)
+
+    Parameters
+    -----------
+    srs : object
+          OSR spatial reference system
+
+    Returns
+        : float
+          The scaling factor
+    """
+
+    return srs.GetProjParm('scale_factor', 1.0)
+
+def get_latitude_of_origin(srs):
+    """
+    Extract the latitude of origin from
+    a spatial reference system
+
+    Parameters
+    ----------
+    srs : object
+          OSR spatial reference object
+
+    Returns
+    -------
+        : float
+          The latitude of the origin of the projection
+    """
+
+    return srs.GetProjParm('latitude_of_origin', 90.0)
+
+

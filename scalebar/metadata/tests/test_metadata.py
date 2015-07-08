@@ -48,3 +48,11 @@ class TestSRSProjectionExtraction(unittest.TestCase):
         """
         with self.assertRaises(RuntimeError):
             proj4 = self.srs.ExportToProj4()
+
+    def test_scale_factor(self):
+        k = em.get_scale_factor(self.srs)
+        self.assertEqual(k, 1.0)
+
+    def test_latitude_of_oring(self):
+        lo = em.get_latitude_of_origin(self.srs)
+        self.assertEqual(lo, 90.0)
