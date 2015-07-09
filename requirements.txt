@@ -1,6 +1,5 @@
 futures
 gdal
 numpy
-svgwrite
 
 
