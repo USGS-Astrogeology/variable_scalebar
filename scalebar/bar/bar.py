@@ -202,6 +202,15 @@ class ScaleBar():
 
     @classmethod
     def from_image(cls, datasource, **kwargs):
+        """
+        Constructor that generates a scalebar from a map projected image.
+
+        Parameters
+        -----------
+        datasource : str
+                     Path to the datasource
+
+        """
         ds = gdalio.GeoDataSet(datasource)
         srs = ds.spatialreference
         extent = ds.extent
@@ -209,6 +218,18 @@ class ScaleBar():
 
     @classmethod
     def from_projstring(cls, projstring, extent, **kwargs):
+        """
+        Constructor that generates a scalebar from an OSR supported
+        projection string and a user defined lat/lon extent
+
+        Parameters
+        ----------
+        projstring : str
+                     OSR supported projection string, i.e. WKT, ESRI WKT, proj4
+
+        extent : tuple
+                 in the form (minlat, minlon, maxlat, maxlon)
+        """
         srs = emd.extract_projstring(projstring)
         return cls(srs, extent, **kwargs)
 

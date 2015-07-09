@@ -30,6 +30,10 @@ def extract_projstring(proj_string):
             break
         except:
             pass
+
+    srs.MorphToESRI()
+    srs.MorphFromESRI()
+    print srs
     return srs
 
 def get_standard_parallels(srs):
