@@ -1,7 +1,6 @@
 futures
 gdal
 numpy
-pyproj
 svgwrite
 
 
