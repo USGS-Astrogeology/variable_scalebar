@@ -31,9 +31,9 @@ def extract_projstring(proj_string):
         except:
             pass
 
+    #Morph through ESRI so that we can get a proj4 string out.
     srs.MorphToESRI()
     srs.MorphFromESRI()
-    print srs
     return srs
 
 def get_standard_parallels(srs):
