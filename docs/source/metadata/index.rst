@@ -1,5 +1,5 @@
 :mod:`metadata` -- Projection Metadata Extraction
-===============================
+=================================================
 
 The :mod:`scalebar.metadata` module provides projection string conversion and extraction capabilities
 
