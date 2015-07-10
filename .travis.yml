@@ -20,6 +20,7 @@ install:
   - conda install -y nose gdal futures
   - conda install -y -c https://conda.binstar.org/ocefpaf pyproj
   - pip install svgwrite
+  - pip install sphinx sphinxcontrib-napoleon
   - pip install coveralls
 script:
   - nosetests --with-coverage --cover-package=scalebar

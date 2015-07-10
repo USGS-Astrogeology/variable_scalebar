@@ -59,7 +59,7 @@ def get_central_meridian(srs):
     """
     Get the central meridian of the projection
 
-     Parameters
+    Parameters
     ----------
     srs : object
           OSR spatial reference system
@@ -149,15 +149,15 @@ def get_false_northing(srs):
 
 def get_scale_factor(srs):
     """
-    Extract the scale factor, k, from
-    a spatial reference system (if present)
+    Extract the scale factor, k, from a spatial reference system (if present)
 
     Parameters
-    -----------
+    ----------
     srs : object
           OSR spatial reference system
 
     Returns
+    -------
         : float
           The scaling factor
     """
