@@ -279,3 +279,13 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}
+
+from unittest.mock import MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getter__(cls, name):
+        return Mock()
+
+MOCK_MODULES = [pyproj, gdal, numpy]
+sys.module.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
