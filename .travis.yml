@@ -17,8 +17,7 @@ before_install:
   - which python
 # Install packages
 install:
-  - conda install -y gdal
-  - conda install -y futures
+  - conda install -y nose gdal futures
   - conda install -y -c https://conda.binstar.org/ocefpaf pyproj
   - pip install svgwrite
   - pip install coverage
