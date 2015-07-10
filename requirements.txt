@@ -1,4 +1,2 @@
-gdal
 numpy
-
-
+gdal
