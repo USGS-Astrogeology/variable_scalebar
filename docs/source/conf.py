@@ -288,4 +288,4 @@ class Mock(MagicMock):
         return Mock()
 
 MOCK_MODULES = ['pyproj', 'gdal', 'numpy']
-sys.module.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
