@@ -58,3 +58,6 @@ target/
 
 #QGIS Aux
 *.aux.xml
+
+#iPython checkpoints
+.ipynb*

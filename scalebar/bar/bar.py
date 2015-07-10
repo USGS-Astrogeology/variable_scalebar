@@ -74,13 +74,14 @@ class ScaleBar():
         self.outputname = outputname
         self.padding = padding
         self._dwg = None
+        self.spatialreference = spatialreference.__str__()
 
         (xmin, ymin), (xmax, ymax) = extent
         projstr = spatialreference.ExportToProj4()
         semimajor = spatialreference.GetSemiMajor()
         semiminor = spatialreference.GetSemiMinor()
 
-        name = emd.get_projection_name(spatialreference)
+        self.name = emd.get_projection_name(spatialreference)
         parallels = emd.get_standard_parallels(spatialreference)
 
         #Create proj4 projection
@@ -101,6 +102,13 @@ class ScaleBar():
             #Convert to pixel grid to latlon grid
             lon, lat =  proj(self.coords[:,0], self.coords[:,1], inverse=True)
 
+        self.minlat = np.min(lat)
+        self.minlon = np.min(lon)
+        self.maxlat = np.max(lat)
+        self.maxlon = np.max(lon)
+
+        self.latlon_bounds = ((self.minlat, self.minlon),
+                              (self.maxlat, self.maxlon))
 
         #Parallels
         if parallels[0] >= lat[0] and parallels[0] <= lat[1]:
@@ -108,12 +116,12 @@ class ScaleBar():
         else:
             p = parallels[1]
 
-        if 'Mercator' in name:
+        if 'Mercator' in self.name:
             self.mask = lat >= cliplat
             distance = 1.0 / np.cos(np.radians(lat[self.mask]))
             distance = distance[::-1]
 
-        elif 'Lambert_Conformal' in name:
+        elif 'Lambert_Conformal' in self.name:
             self.mask = lat >= cliplat
             parallels.sort()
 
@@ -128,7 +136,7 @@ class ScaleBar():
             distance = num / den
             distance = distance[::-1]
 
-        elif 'Stereographic' in name:
+        elif 'Stereographic' in self.name:
             clat = emd.get_latitude_of_origin(spatialreference)
             clon = emd.get_central_meridian(spatialreference)
 
