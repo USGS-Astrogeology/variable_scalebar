@@ -1,5 +1,5 @@
 import unittest
-import osr
+from osgeo import osr
 osr.UseExceptions()
 
 from .. import extract_metadata as em
