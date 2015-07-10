@@ -1,4 +1,3 @@
-from future.utils import lrange
 from osgeo import gdal
 from osgeo import osr
 
@@ -52,7 +51,7 @@ def get_standard_parallels(srs):
     """
 
     parallels = [None, None]
-    for i in lrange(2):
+    for i in range(2):
         parallels[i] = srs.GetProjParm('Standard_Parallel_{}'.format(i+1), 0.0)
     return parallels
 
