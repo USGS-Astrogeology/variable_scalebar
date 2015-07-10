@@ -15,7 +15,7 @@ before_install:
   - conda update --yes conda
 # Install packages
 install:
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION --file requirements.txt
+  - conda create -y -q -n test-environment python=$TRAVIS_PYTHON_VERSION --file requirements.txt
   - conda install --yes -c https://conda.binstart.org/osgeo pyproj
   - pip install svgwrite
   - conda activate test-environment
