@@ -287,5 +287,5 @@ class Mock(MagicMock):
     def __getter__(cls, name):
         return Mock()
 
-MOCK_MODULES = [pyproj, gdal, numpy]
+MOCK_MODULES = ['pyproj', 'gdal', 'numpy']
 sys.module.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
