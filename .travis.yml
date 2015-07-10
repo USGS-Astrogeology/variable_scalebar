@@ -18,7 +18,6 @@ install:
   - conda create -y -q -n test-environment python=$TRAVIS_PYTHON_VERSION --file requirements.txt
   - conda install --yes -c https://conda.binstar.org/ocefpaf pyproj
   - pip install svgwrite
-  - conda activate test-environment
-  - conda install --yes nosetests coverage
+  - source activate test-environment
 script:
   - nosetests --with-coverage --cover-package=scalebar
