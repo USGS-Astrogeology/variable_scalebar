@@ -1,5 +1,5 @@
 from osgeo import gdal
-import osr
+from osgeo import osr
 
 from scalebar.metadata import extract_metadata as em
 

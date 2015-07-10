@@ -1,6 +1,6 @@
 from future.utils import lrange
-import gdal
-import osr
+from osgeo import gdal
+from osgeo import osr
 
 import_options = ['ImportFromWkt', 'ImportFromProj4',
                   'ImportFromEPSG', 'ImportFromUSGS',
