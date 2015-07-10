@@ -1,6 +1,5 @@
-from future.utils import lrange
-import gdal
-import osr
+from osgeo import gdal
+from osgeo import osr
 
 import_options = ['ImportFromWkt', 'ImportFromProj4',
                   'ImportFromEPSG', 'ImportFromUSGS',
@@ -30,6 +29,10 @@ def extract_projstring(proj_string):
             break
         except:
             pass
+
+    #Morph through ESRI so that we can get a proj4 string out.
+    srs.MorphToESRI()
+    srs.MorphFromESRI()
     return srs
 
 def get_standard_parallels(srs):
@@ -48,9 +51,8 @@ def get_standard_parallels(srs):
     """
 
     parallels = [None, None]
-    print srs.GetProjParm('Standard_Parallel_1', 24)
-    for i in lrange(2):
-        parallels[i] = srs.GetProjParm('Standard_Parallel_{}'.format(i), 0.0)
+    for i in range(2):
+        parallels[i] = srs.GetProjParm('Standard_Parallel_{}'.format(i+1), 0.0)
     return parallels
 
 def get_central_meridian(srs):
@@ -69,7 +71,6 @@ def get_central_meridian(srs):
     """
 
     return srs.GetProjParm('central_meridian', 0.0)
-
 
 def get_spheroid(srs):
     """
@@ -94,7 +95,7 @@ def get_spheroid(srs):
 
 def get_projection_name(srs):
     """
-    Eactract the projection name from a
+    Extract the projection name from a
     spatial reference system
 
     Parameters
@@ -145,3 +146,40 @@ def get_false_northing(srs):
     """
 
     return srs.GetProjParm('False_Northing', 0)
+
+def get_scale_factor(srs):
+    """
+    Extract the scale factor, k, from
+    a spatial reference system (if present)
+
+    Parameters
+    -----------
+    srs : object
+          OSR spatial reference system
+
+    Returns
+        : float
+          The scaling factor
+    """
+
+    return srs.GetProjParm('scale_factor', 1.0)
+
+def get_latitude_of_origin(srs):
+    """
+    Extract the latitude of origin from
+    a spatial reference system
+
+    Parameters
+    ----------
+    srs : object
+          OSR spatial reference object
+
+    Returns
+    -------
+        : float
+          The latitude of the origin of the projection
+    """
+
+    return srs.GetProjParm('latitude_of_origin', 90.0)
+
+

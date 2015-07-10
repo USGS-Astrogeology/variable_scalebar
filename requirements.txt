@@ -1,2 +1,4 @@
-futures
+gdal
+numpy
+
 

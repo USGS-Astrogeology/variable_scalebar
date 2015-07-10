@@ -1,5 +1,7 @@
 from osgeo import gdal
-import osr
+from osgeo import osr
+
+from scalebar.metadata import extract_metadata as em
 
 class GeoDataSet(object):
     def __init__(self, filename):
@@ -13,10 +15,10 @@ class GeoDataSet(object):
         return self._geotransform
 
     @property
-    def scale(self):
-        if not getattr(self, '_scale', None):
-            self._scale = self.ds.GetRasterBand(1).GetScale()
-        return self._scale
+    def standardparallels(self):
+        if not getattr(self, '_standardparallels', None):
+            self._standardparallels = em.get_standard_parallels(self.spatialreference)
+        return self._standardparallels
 
     @property
     def unittype(self):
@@ -29,17 +31,29 @@ class GeoDataSet(object):
         if not getattr(self, '_srs', None):
             self._srs = osr.SpatialReference()
             self._srs.ImportFromWkt(self.ds.GetProjection())
+            try:
+                self._srs.MorphToESRI()
+                self._srs.MorphFromESRI()
+            except: pass
+
+            #Setup the GCS
+            self._gcs = self._srs.CloneGeogCS()
         return self._srs
 
     @property
-    def latlonextent(self):
-        if not getattr(self, '_geotransform', None):
-                   self.geotransform
+    def geospatial_coordinate_system(self):
+        if not getattr(self, '_gcs', None):
+            self._gcs = self.spatialreference.CloneGeogCS()
+        return self._gcs
 
+    @property
+    def latlon_extent(self):
         if not getattr(self, '_latlonextent', None):
-
-
-            self._latlonextent = [(),()]
+            ext = self.extent
+            llat, llon = self.pixel_to_latlon(ext[0][0], ext[0][1])
+            ulat, ulon = self.pixel_to_latlon(ext[1][0], ext[1][1])
+            self._latlonextent = [(llat, llon), (ulat, ulon)]
+        return self._latlonextent
 
     @property
     def extent(self):
@@ -58,33 +72,34 @@ class GeoDataSet(object):
 
         return self._extent
 
-    def pixel_to_latlon(self, lat, lon):
+    @property
+    def coordinate_transformation(self):
+        if not getattr(self, '_ct', None):
+            self._ct = osr.CoordinateTransformation(self.spatialreference,
+                                                  self.geospatial_coordinate_system)
+        return self._ct
 
-        if not getattr(self, 'geotransform', None):
-            self.geotransform
+    @property
+    def inverse_coordinate_transformation(self):
+        if not getattr(self, '_ict', None):
+                       self._ict = osr.CoordinateTransformation(self.geospatial_coordinate_system,
+                                                                self.spatialreference)
+        return self._ict
 
-        if not getattr(self, 'srs', None):
-            self.spatialreference
+    def pixel_to_latlon(self, x, y):
+        gt = self.geotransform
+        x = gt[0] + (x * gt[1]) + (y * gt[2])
+        y = gt[3] + (x * gt[4]) + (y * gt[5])
+        lon, lat, _ = self.coordinate_transformation.TransformPoint(x, y)
 
-        if not getattr(self, 'srslatlon', None):
-            self.srslatlon = self.spatialreference.CloneGeogCS()
-            print self.srslatlon.ExportToProj4()
-            print self.spatialreference.ExportToProj4()
+        return lat, lon
 
-        if not getattr(self, 'ct', None):
-            self.ct = osr.CoordinateTransformation(self.srslatlon,
-                                                   self.spatialreference)
-            #print self.ct
-        #(x, y, z) = self.ct.TransformPoint(18, 24, 0)
-
-        #gt = self.geotransform
-        #x = (x - gt[0]) /gt[1]
-        #y = (y - gt[3]) / gt[5]
-
-        return 0, 0
-
-    def latlon_to_pixel(self):
-        pass
+    def latlon_to_pixel(self, lat, lon):
+        gt = self.geotransform
+        ulat, ulon, _ = self.inverse_coordinate_transformation.TransformPoint(lon, lat)
+        x = (ulat - gt[0]) / gt[1]
+        y = (ulon - gt[3]) / gt[5]
+        return x, y
 
     @property
     def ndv(self, band=1):
@@ -92,4 +107,34 @@ class GeoDataSet(object):
             self._ndv = self.ds.GetRasterBand(band).GetNoDataValue()
         return self._ndv
 
+    @property
+    def scale(self):
+        if not getattr(self, '_scale', None):
+            unitname = self.spatialreference.GetLinearUnitsName()
+            value = self.spatialreference.GetLinearUnits()
+            self._scale = (unitname, value)
+        return self._scale
 
+    @property
+    def spheroid(self):
+        if not getattr(self, '_spheroid', None):
+            self._spheroid = em.get_spheroid(self.spatialreference)
+        return self._spheroid
+
+    @property
+    def standardparallels(self):
+        if not getattr(self, '_standardparallels', None):
+            self._standardparallels = em.get_standard_parallels(self.spatialreference)
+        return self._standardparallels
+
+    @property
+    def rastersize(self):
+        if not getattr(self, '_rastersize', None):
+            self._rastersize = (self.ds.RasterXSize, self.ds.RasterYSize)
+        return self._rastersize
+
+    @property
+    def central_meridian(self):
+        if not getattr(self, '_central_meridian', None):
+            self._central_meridian = em.get_central_meridian(self.spatialreference)
+        return self._central_meridian
