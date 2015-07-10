@@ -1,4 +1,5 @@
-gdal
 numpy
-
-
+gdal
+mock
+sphinx
+sphinxcontrib-napoleon
