@@ -35,7 +35,7 @@ class ScaleBar():
                         The frequency at which latitude lines are labeled
 
     mapscale : float
-               The map scale, e.g. 1/1000000.  Must be expressed as a fraction (ratio)
+               The denominator of the map scale, e.g. 1000000.
 
     lon_minor_ticks : list
                       Unlabeled tick lines, in kilometers
@@ -65,7 +65,7 @@ class ScaleBar():
     ----------
 
     """
-    def __init__(self, spatialreference, extent, nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6,
+    def __init__(self, spatialreference, extent, nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1e6,
                 lon_minor_ticks=[12.5], lon_major_ticks=[25, 50, 75],
                 symmetrical=True, height = 4.0, fontsize=12, padding=1.0, outputname='scalebar.svg',
                 latlon=False):
@@ -79,7 +79,7 @@ class ScaleBar():
         self.padding = padding
         self._dwg = None
         self.spatialreference = spatialreference.__str__()
-        self.mapscale = float(mapscale)
+        self.mapscale = 1/float(mapscale)
 
         (xmin, ymin, xmax, ymax) = extent
         projstr = spatialreference.ExportToProj4()
