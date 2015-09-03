@@ -79,6 +79,7 @@ class ScaleBar():
         self.padding = padding
         self._dwg = None
         self.spatialreference = spatialreference.__str__()
+        self.mapscale = float(mapscale)
 
         (xmin, ymin, xmax, ymax) = extent
         projstr = spatialreference.ExportToProj4()
@@ -169,7 +170,7 @@ class ScaleBar():
     
         #Vertical distance line logic
         for l in ticks:
-            line_coords = ((l * 100) *  mapscale) * distance
+            line_coords = ((l * 100) *  self.mapscale) * distance
             if self._dwg == None:
                 length = np.max(line_coords)
                 size = (length * 2, self.height)
