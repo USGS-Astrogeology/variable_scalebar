@@ -64,7 +64,7 @@ class TestScaleBar(unittest.TestCase):
                  UNIT["Meter",1],
                  PARAMETER["latitude_of_origin",0.0]]"""
         testname = os.path.join(self.path,'mars_merc_wkt.svg')
-        s = bar.ScaleBar.from_projstring(wkt, ((0, 0), (180,65)), outputname=testname)
+        s = bar.ScaleBar.from_projstring(wkt, (0, 0, 180,65), outputname=testname)
         ref, test = getsvg(get_path('mars_merc_wkt.svg'), testname)
         self.assertEqual(ref, test)
         os.remove(testname)
@@ -84,7 +84,7 @@ class TestScaleBar(unittest.TestCase):
                     PARAMETER["Latitude_Of_Origin",-90],
                     UNIT["Meter",1]]"""
         testname = os.path.join(self.path,'mars_polar_wkt.svg')
-        s = bar.ScaleBar.from_projstring(wkt, ((0, -90), (180,-40)), outputname=testname, cliplat=-90)
+        s = bar.ScaleBar.from_projstring(wkt, (0, -90, 180,-40), outputname=testname, cliplat=-90)
         ref, test = getsvg(get_path('mars_polar_wkt.svg'), testname)
         self.assertEqual(ref, test)
         os.remove(testname)
@@ -105,7 +105,7 @@ class TestScaleBar(unittest.TestCase):
                     PARAMETER["Latitude_Of_Origin",0],
                     UNIT["Meter",1]]"""
         testname = os.path.join(self.path, 'lunar_lamb_wkt.svg')
-        s = bar.ScaleBar.from_projstring(wkt, ((33.25, 36), (60, 78.11)), outputname=testname)
+        s = bar.ScaleBar.from_projstring(wkt, (33.25, 36, 60, 78.11), outputname=testname)
         ref, test = getsvg(get_path('lunar_lamb_wkt.svg'), testname)
         self.assertEqual(ref, test)
         os.remove(testname)

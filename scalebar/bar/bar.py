@@ -22,7 +22,8 @@ class ScaleBar():
     spatialreference : object
                        A OSR spatial reference object.
     extent : iterable
-             An iterable in the form ((xmin, ymin), (xmax, ymax))
+             An iterable in the form (xmin, ymin, xmax, ymax) or
+             (lonmin, latmin, lonmax, latmax)
 
     nnodes : int
              The number of nodes used to create smoother lines
@@ -76,7 +77,7 @@ class ScaleBar():
         self._dwg = None
         self.spatialreference = spatialreference.__str__()
 
-        (xmin, ymin), (xmax, ymax) = extent
+        (xmin, ymin, xmax, ymax) = extent
         projstr = spatialreference.ExportToProj4()
         semimajor = spatialreference.GetSemiMajor()
         semiminor = spatialreference.GetSemiMinor()
@@ -247,7 +248,9 @@ class ScaleBar():
         """
         ds = gdalio.GeoDataSet(datasource)
         srs = ds.spatialreference
-        extent = ds.extent
+        packed_extent = ds.extent
+        extent = (packed_extent[0][0], packed_extent[0][1],
+                  packed_extent[1][0], packed_extent[1][1])
         return cls(srs, extent, **kwargs)
 
     @classmethod
