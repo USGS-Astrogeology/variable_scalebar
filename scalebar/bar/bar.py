@@ -23,7 +23,7 @@ class ScaleBar():
                        A OSR spatial reference object.
     extent : iterable
              An iterable in the form (xmin, ymin, xmax, ymax) or
-             (lonmin, latmin, lonmax, latmax)
+             (latmin, lonmin, latmax, lonmax)
 
     nnodes : int
              The number of nodes used to create smoother lines
@@ -38,10 +38,10 @@ class ScaleBar():
                The map scale, e.g. 1/1000000.  Must be expressed as a fraction (ratio)
 
     lon_minor_ticks : list
-                      Unlabeled tick lines
+                      Unlabeled tick lines, in kilometers
 
     lon_major_ticks : list
-                      Labeled tick lines
+                      Labeled tick lines, in kilometers
 
     symmetrical : bool
                   Determines whether the scale bar is reflected over the central meridian
@@ -59,6 +59,8 @@ class ScaleBar():
     outputnamne : str
                   Name of the output file.  This can be a full path.
 
+    latlon : boolean
+             
     Attributes
     ----------
 
@@ -67,6 +69,7 @@ class ScaleBar():
                 lon_minor_ticks=[12.5], lon_major_ticks=[25, 50, 75],
                 symmetrical=True, height = 4.0, fontsize=12, padding=1.0, outputname='scalebar.svg',
                 latlon=False):
+
         nnodes = self._checknnodes(nnodes)
 
         self.fontsize = fontsize
@@ -102,6 +105,7 @@ class ScaleBar():
         else:
             #Convert to pixel grid to latlon grid
             lon, lat =  proj(self.coords[:,0], self.coords[:,1], inverse=True)
+        
 
         self.minlat = np.min(lat)
         self.minlon = np.min(lon)
@@ -110,7 +114,6 @@ class ScaleBar():
 
         self.latlon_bounds = ((self.minlat, self.minlon),
                               (self.maxlat, self.maxlon))
-
         #Parallels
         if parallels[0] >= lat[0] and parallels[0] <= lat[1]:
             p = parallels[0]
@@ -153,7 +156,6 @@ class ScaleBar():
                             math.cos(math.radians(clat))*math.cos(math.radians(l))*math.cos(math.radians(180 - clon)))
             distance = distance[::-1]
             self.mask = self.coords[:,1] >= cliplat
-
         lon_major_ticks = map(lambda x: x * 1000, lon_major_ticks) #km to m
         lon_minor_ticks = map(lambda x: x * 1000, lon_minor_ticks)
 
@@ -161,11 +163,11 @@ class ScaleBar():
         ticks.sort()
         ticks = ticks[::-1]
 
-
         south = False
         if lat[0] > lat[-1]:
             south = True
-
+    
+        #Vertical distance line logic
         for l in ticks:
             line_coords = ((l * 100) *  mapscale) * distance
             if self._dwg == None:
@@ -200,7 +202,7 @@ class ScaleBar():
                         dist = self._dwg.text('{}km'.format(l / 1000), (coords[0][0], (ytext + padding * 1.3) * cm ))
                         self._dwg.add(dist)
 
-
+        
         #Compute the latrange and labels
         latrange = lat[self.mask]
         if latrange[0] > latrange[-1]: #Ghetto monotonic check for southern hemisphere...
@@ -210,7 +212,6 @@ class ScaleBar():
         ticks = labels = np.hstack((round(latrange[0], 1), ticks, round(latrange[-1], 1)))
         horizontal_ticks = self._dwg.add(self._dwg.g(id='horizontal_tick', stroke='black'))
         #Compute the y coordinate values in scalebar space
-
         horizontals = self.height / (np.max(ticks) - np.min(ticks)) *(ticks - np.min(ticks))
         horizontals = np.abs(horizontals - self.height)
         for i, h in enumerate(horizontals):
@@ -223,7 +224,7 @@ class ScaleBar():
                 ytext = y[1]
                 lat = self._dwg.text(u'{}\u00b0'.format(labels[i]), ((size[0] * 2 + 1.0) * cm, ytext))
                 self.text.add(lat)
-
+            
             if symmetrical:
                 x = [self.padding * cm, (size[0] + self.padding) * cm]
                 xy = zip(x, y)
