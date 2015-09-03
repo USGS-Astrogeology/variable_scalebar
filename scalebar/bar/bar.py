@@ -35,7 +35,7 @@ class ScaleBar():
                         The frequency at which latitude lines are labeled
 
     mapscale : float
-               The map scale, e.g. 1/1000000.  Must be expressed as a fraction (ratio)
+               The denominator of the map scale, e.g. 1000000.
 
     lon_minor_ticks : list
                       Unlabeled tick lines, in kilometers
@@ -65,7 +65,7 @@ class ScaleBar():
     ----------
 
     """
-    def __init__(self, spatialreference, extent, nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1/1e6,
+    def __init__(self, spatialreference, extent, nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1e6,
                 lon_minor_ticks=[12.5], lon_major_ticks=[25, 50, 75],
                 symmetrical=True, height = 4.0, fontsize=12, padding=1.0, outputname='scalebar.svg',
                 latlon=False):
@@ -79,6 +79,7 @@ class ScaleBar():
         self.padding = padding
         self._dwg = None
         self.spatialreference = spatialreference.__str__()
+        self.mapscale = 1/float(mapscale)
 
         (xmin, ymin, xmax, ymax) = extent
         projstr = spatialreference.ExportToProj4()
@@ -169,7 +170,7 @@ class ScaleBar():
     
         #Vertical distance line logic
         for l in ticks:
-            line_coords = ((l * 100) *  mapscale) * distance
+            line_coords = ((l * 100) *  self.mapscale) * distance
             if self._dwg == None:
                 length = np.max(line_coords)
                 size = (length * 2, self.height)
@@ -179,16 +180,21 @@ class ScaleBar():
                     size[0] /= 2
                     size = tuple(size)
                 self.createvertical(size)
-
+               
+                #Check hemisphere
+                if south == True:
+                    ytext = self.y[0]
+                else:
+                    ytext = self.y[-1]
+                #Label the vertical 
+                center = (size[0]  + self.padding)* 0.995 # Offset left for font size
+                dist = self._dwg.text('0', (center * cm, (ytext + self.padding * 1.3) * cm)) 
+                self._dwg.add(dist)
+               
             nodes = zip(line_coords[::-1] + size[0], self.y[::-1])
-            if south == True:
-                ytext = self.y[0]
-            else:
-                ytext = self.y[-1]
             for i, start in enumerate(nodes[:-1]):
                 coords = self._pad_and_convert(start, nodes[i + 1])
                 self.drawline(coords, group=self.vertical)
-
                 if i == 0 and l in lon_major_ticks:
                     dist = self._dwg.text('{}km'.format(l / 1000), (coords[0][0], (ytext  + self.padding * 1.3) * cm))
                     self._dwg.add(dist)
@@ -199,7 +205,7 @@ class ScaleBar():
                     coords = self._pad_and_convert(start, nodes[i + 1])
                     self.drawline(coords, group=self.vertical)
                     if i == 0 and l in lon_major_ticks:
-                        dist = self._dwg.text('{}km'.format(l / 1000), (coords[0][0], (ytext + padding * 1.3) * cm ))
+                        dist = self._dwg.text('{}km'.format(l / 1000), (coords[0][0], (ytext +self.padding * 1.3) * cm ))
                         self._dwg.add(dist)
 
         
@@ -250,9 +256,15 @@ class ScaleBar():
         ds = gdalio.GeoDataSet(datasource)
         srs = ds.spatialreference
         packed_extent = ds.extent
-        extent = (packed_extent[0][0], packed_extent[0][1],
-                  packed_extent[1][0], packed_extent[1][1])
-        return cls(srs, extent, **kwargs)
+        if 'extent' in kwargs.keys():
+            extent = kwargs['extent']
+            kwargs.pop('extent')
+            latlon = True
+        else:
+            extent = (packed_extent[0][0], packed_extent[0][1],
+                      packed_extent[1][0], packed_extent[1][1])
+            latlon = False
+        return cls(srs, extent, latlon=latlon, **kwargs)
 
     @classmethod
     def from_projstring(cls, projstring, extent, **kwargs):

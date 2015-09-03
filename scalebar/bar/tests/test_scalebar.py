@@ -27,7 +27,7 @@ class TestScaleBar(unittest.TestCase):
 
     def test_polar_image(self):
         ds = get_path('Mars_MGS_MOLA_ClrShade_MAP2_90.0N0.0_POLA.tif')
-        testname = os.path.join(self.path, 'polartest')
+        testname = os.path.join(self.path, 'polartest.svg')
         s = bar.ScaleBar.from_image(ds, outputname = testname)
         ref, test = getsvg(get_path('mars_polar.svg'), testname)
         self.assertEqual(ref, test)
