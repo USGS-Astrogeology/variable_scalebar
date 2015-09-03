@@ -180,16 +180,21 @@ class ScaleBar():
                     size[0] /= 2
                     size = tuple(size)
                 self.createvertical(size)
-
+               
+                #Check hemisphere
+                if south == True:
+                    ytext = self.y[0]
+                else:
+                    ytext = self.y[-1]
+                #Label the vertical 
+                center = (size[0]  + self.padding)* 0.995 # Offset left for font size
+                dist = self._dwg.text('0', (center * cm, (ytext + self.padding * 1.3) * cm)) 
+                self._dwg.add(dist)
+               
             nodes = zip(line_coords[::-1] + size[0], self.y[::-1])
-            if south == True:
-                ytext = self.y[0]
-            else:
-                ytext = self.y[-1]
             for i, start in enumerate(nodes[:-1]):
                 coords = self._pad_and_convert(start, nodes[i + 1])
                 self.drawline(coords, group=self.vertical)
-
                 if i == 0 and l in lon_major_ticks:
                     dist = self._dwg.text('{}km'.format(l / 1000), (coords[0][0], (ytext  + self.padding * 1.3) * cm))
                     self._dwg.add(dist)
@@ -200,7 +205,7 @@ class ScaleBar():
                     coords = self._pad_and_convert(start, nodes[i + 1])
                     self.drawline(coords, group=self.vertical)
                     if i == 0 and l in lon_major_ticks:
-                        dist = self._dwg.text('{}km'.format(l / 1000), (coords[0][0], (ytext + padding * 1.3) * cm ))
+                        dist = self._dwg.text('{}km'.format(l / 1000), (coords[0][0], (ytext +self.padding * 1.3) * cm ))
                         self._dwg.add(dist)
 
         
@@ -251,9 +256,15 @@ class ScaleBar():
         ds = gdalio.GeoDataSet(datasource)
         srs = ds.spatialreference
         packed_extent = ds.extent
-        extent = (packed_extent[0][0], packed_extent[0][1],
-                  packed_extent[1][0], packed_extent[1][1])
-        return cls(srs, extent, **kwargs)
+        if 'extent' in kwargs.keys():
+            extent = kwargs['extent']
+            kwargs.pop('extent')
+            latlon = True
+        else:
+            extent = (packed_extent[0][0], packed_extent[0][1],
+                      packed_extent[1][0], packed_extent[1][1])
+            latlon = False
+        return cls(srs, extent, latlon=latlon, **kwargs)
 
     @classmethod
     def from_projstring(cls, projstring, extent, **kwargs):
