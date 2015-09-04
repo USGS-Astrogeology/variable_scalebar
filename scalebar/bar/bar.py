@@ -65,7 +65,7 @@ class ScaleBar():
     ----------
 
     """
-    def __init__(self, spatialreference, extent, nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1e6,
+    def __init__(self, spatialreference, extent, nnodes=51, cliplat=0.0, lat_tick_interval=5, mapscale=1000000,
                 lon_minor_ticks=[12.5], lon_major_ticks=[25, 50, 75],
                 symmetrical=True, height = 4.0, fontsize=12, padding=1.0, outputname='scalebar.svg',
                 latlon=False):
@@ -121,10 +121,49 @@ class ScaleBar():
         else:
             p = parallels[1]
 
-        if 'Mercator' in self.name:
+        if 'Transverse_Mercator' in self.name:
+            self.mask = lat >= cliplat
+
+            clat = emd.get_latitude_of_origin(spatialreference)
+            clon = emd.get_central_meridian(spatialreference)
+
+            if clat > 0:
+                self.coords[:,1] = lat = np.linspace(np.min(lat), clat, self.nnodes)
+            else:
+                self.coords[:,1] = lat = np.linspace(np.max(lat), clat, self.nnodes)
+
+            distance = np.empty(len(lat))
+            k_naught = emd.get_scale_factor(spatialreference)
+            for i, l in enumerate(lat):
+                B = math.cos(math.radians(clon)) * math.sin(math.radians(clat) - math.radians(l))
+                distance[i] = k_naught / math.sqrt(1.0 - B ** 2.0)
+            distance = distance[::-1]
+            self.mask = self.coords[:,1] >= cliplat
+           
+        elif 'Mercator' in self.name:
             self.mask = lat >= cliplat
             distance = 1.0 / np.cos(np.radians(lat[self.mask]))
             distance = distance[::-1]
+
+        #elif 'Sinusoidal' in self.name:
+
+        elif (('Equirectangular' in self.name) or ('Equidistant_Cylindrical' in self.name) \
+              or ('Plate_Carree' in self.name) or ('Simple_Cylindrical' in self.name)):
+            self.mask = lat >= cliplat
+
+            p1 = parallels[0]
+            clon = emd.get_central_meridian(spatialreference)
+
+            if p1 > 0:
+                self.coords[:,1] = lat = np.linspace(np.min(lat), p1, self.nnodes)
+            else:
+                self.coords[:,1] = lat = np.linspace(np.max(lat), p1, self.nnodes)
+
+            distance = np.empty(len(lat))
+            for i, l in enumerate(lat):
+                distance[i] = math.cos(math.radians(p1))/math.cos(math.radians(l))
+            distance = distance[::-1]
+            self.mask = self.coords[:,1] >= cliplat
 
         elif 'Lambert_Conformal' in self.name:
             self.mask = lat >= cliplat
@@ -157,6 +196,8 @@ class ScaleBar():
                             math.cos(math.radians(clat))*math.cos(math.radians(l))*math.cos(math.radians(180 - clon)))
             distance = distance[::-1]
             self.mask = self.coords[:,1] >= cliplat
+
+            
         lon_major_ticks = map(lambda x: x * 1000, lon_major_ticks) #km to m
         lon_minor_ticks = map(lambda x: x * 1000, lon_minor_ticks)
 
