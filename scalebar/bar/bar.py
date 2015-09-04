@@ -122,7 +122,6 @@ class ScaleBar():
             p = parallels[1]
 
         if 'Transverse_Mercator' in self.name:
-            self.mask = lat >= cliplat
 
             clat = emd.get_latitude_of_origin(spatialreference)
             clon = emd.get_central_meridian(spatialreference)
@@ -149,7 +148,6 @@ class ScaleBar():
 
         elif (('Equirectangular' in self.name) or ('Equidistant_Cylindrical' in self.name) \
               or ('Plate_Carree' in self.name) or ('Simple_Cylindrical' in self.name)):
-            self.mask = lat >= cliplat
 
             p1 = parallels[0]
             clon = emd.get_central_meridian(spatialreference)
@@ -184,7 +182,6 @@ class ScaleBar():
             clat = emd.get_latitude_of_origin(spatialreference)
             clon = emd.get_central_meridian(spatialreference)
 
-            self.coords = np.empty((nnodes, 2))
             if clat > 0:
                 self.coords[:,1] = lat = np.linspace(np.min(lat), clat, self.nnodes)
             else:
