@@ -14,7 +14,7 @@ Variable scalebar creation for mercator, lambert conformal conic  and polar ster
 Sub-packages
 -------------
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    bar/index
    fileio/index
