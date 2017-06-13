@@ -60,7 +60,7 @@ class ScaleBar():
                   Name of the output file.  This can be a full path.
 
     latlon : boolean
-             
+
     Attributes
     ----------
 
@@ -106,7 +106,7 @@ class ScaleBar():
         else:
             #Convert to pixel grid to latlon grid
             lon, lat =  proj(self.coords[:,0], self.coords[:,1], inverse=True)
-        
+
 
         self.minlat = np.min(lat)
         self.minlon = np.min(lon)
@@ -138,7 +138,7 @@ class ScaleBar():
                 distance[i] = k_naught / math.sqrt(1.0 - B ** 2.0)
             distance = distance[::-1]
             self.mask = self.coords[:,1] >= cliplat
-           
+
         elif 'Mercator' in self.name:
             self.mask = lat >= cliplat
             distance = 1.0 / np.cos(np.radians(lat[self.mask]))
@@ -194,9 +194,9 @@ class ScaleBar():
             distance = distance[::-1]
             self.mask = self.coords[:,1] >= cliplat
 
-            
-        lon_major_ticks = map(lambda x: x * 1000, lon_major_ticks) #km to m
-        lon_minor_ticks = map(lambda x: x * 1000, lon_minor_ticks)
+
+        lon_major_ticks = list(map(lambda x: x * 1000, lon_major_ticks)) #km to m
+        lon_minor_ticks = list(map(lambda x: x * 1000, lon_minor_ticks))
 
         ticks = lon_major_ticks + lon_minor_ticks
         ticks.sort()
@@ -205,7 +205,7 @@ class ScaleBar():
         south = False
         if lat[0] > lat[-1]:
             south = True
-    
+
         #Vertical distance line logic
         for l in ticks:
             line_coords = ((l * 100) *  self.mapscale) * distance
@@ -218,18 +218,19 @@ class ScaleBar():
                     size[0] /= 2
                     size = tuple(size)
                 self.createvertical(size)
-               
+
                 #Check hemisphere
                 if south == True:
                     ytext = self.y[0]
                 else:
                     ytext = self.y[-1]
-                #Label the vertical 
+
+                #Label the vertical
                 center = (size[0]  + self.padding)* 0.995 # Offset left for font size
-                dist = self._dwg.text('0', (center * cm, (ytext + self.padding * 1.3) * cm)) 
+                dist = self._dwg.text('0', (center * cm, (ytext + self.padding * 1.3) * cm))
                 self._dwg.add(dist)
-               
-            nodes = zip(line_coords[::-1] + size[0], self.y[::-1])
+
+            nodes = list(zip(line_coords[::-1] + size[0], self.y[::-1]))
             for i, start in enumerate(nodes[:-1]):
                 coords = self._pad_and_convert(start, nodes[i + 1])
                 self.drawline(coords, group=self.vertical)
@@ -238,7 +239,7 @@ class ScaleBar():
                     self._dwg.add(dist)
             if symmetrical:
                 nline_coords = (line_coords * -1)
-                nodes = zip(nline_coords[::-1] + size[0], self.y[::-1])
+                nodes = list(zip(nline_coords[::-1] + size[0], self.y[::-1]))
                 for i, start in enumerate(nodes[:-1]):
                     coords = self._pad_and_convert(start, nodes[i + 1])
                     self.drawline(coords, group=self.vertical)
@@ -246,7 +247,7 @@ class ScaleBar():
                         dist = self._dwg.text('{}km'.format(l / 1000), (coords[0][0], (ytext +self.padding * 1.3) * cm ))
                         self._dwg.add(dist)
 
-        
+
         #Compute the latrange and labels
         latrange = lat[self.mask]
         if latrange[0] > latrange[-1]: #Ghetto monotonic check for southern hemisphere...
@@ -261,17 +262,17 @@ class ScaleBar():
         for i, h in enumerate(horizontals):
             x = [(size[0] + self.padding) * cm, (size[0] * 2 + self.padding) * cm]
             y = [(h + self.padding)  * cm] * 2
-            xy = zip(x, y)
+            xy = list(zip(x, y))
             line = self._dwg.line(start=xy[0], end=xy[1])
             horizontal_ticks.add(line)
             if i % 2 == 0:
                 ytext = y[1]
                 lat = self._dwg.text(u'{}\u00b0'.format(labels[i]), ((size[0] * 2 + 1.0) * cm, ytext))
                 self.text.add(lat)
-            
+
             if symmetrical:
                 x = [self.padding * cm, (size[0] + self.padding) * cm]
-                xy = zip(x, y)
+                xy = list(zip(x, y))
                 line = self._dwg.line(start=xy[0], end=xy[1])
                 horizontal_ticks.add(line)
                 if i % 2 == 0:
@@ -337,7 +338,7 @@ class ScaleBar():
         self.y = y
         #Draw the line(s)
         center = size[0]
-        nodes = list(itertools.izip_longest([center], y, fillvalue=center))
+        nodes = list(itertools.zip_longest([center], y, fillvalue=center))
         for i, start in enumerate(nodes[:-1]):
             coords = self._pad_and_convert(start, nodes[i + 1])
             self.drawline(coords, group=self.vertical)

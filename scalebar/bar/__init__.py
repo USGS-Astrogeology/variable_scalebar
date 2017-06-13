@@ -1,1 +1,1 @@
-from bar import ScaleBar
+from .bar import ScaleBar
